@@ -3,9 +3,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppContext, Status, Priority, Role, Task } from "@/context/AppContext";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
-import * as XLSX from "xlsx";
 
 type Tab = "board" | "tasks" | "team" | "report";
 
@@ -75,7 +72,7 @@ export default function Dashboard() {
     setMemberModal(false);
   };
 
-  const downloadReport = () => {
+  const downloadReport = async () => {
     const rows = tasks.map(t => {
       const base = { Task: t.title, Status: t.status };
       return reportTemplate === "Detailed"
@@ -84,11 +81,14 @@ export default function Dashboard() {
     });
 
     if (reportFormat === "CSV" || reportFormat === "Excel") {
+      const XLSX = await import("xlsx");
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Report");
       XLSX.writeFile(wb, reportFormat === "CSV" ? "report.csv" : "report.xlsx");
     } else {
+      const { jsPDF } = await import("jspdf");
+      await import("jspdf-autotable");
       const doc = new jsPDF();
       doc.setFontSize(16);
       doc.text("Weekly Progress Report", 14, 15);
